@@ -2,6 +2,7 @@ import './index.css'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Home from './pages/Home.tsx'
 import About from './pages/About.tsx'
+import Usuarios from './pages/Usuarios.tsx'
 import NotFound from './pages/NotFound.tsx'
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
           <div className="container mx-auto flex gap-4">
             <Link to="/" className="text-stone-200 font-medium">Inicio</Link>
             <Link to="/about" className="text-stone-200/90">Acerca</Link>
+            <Link to="/usuarios" className="text-stone-200/90">Usuarios</Link>
           </div>
         </nav>
 
@@ -19,6 +21,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/usuarios" element={<Usuarios />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
