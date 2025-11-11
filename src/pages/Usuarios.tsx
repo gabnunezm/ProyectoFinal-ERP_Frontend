@@ -65,6 +65,21 @@ export default function Usuarios() {
   }
   const formRef = useRef<HTMLDivElement | null>(null)
 
+  function getAuthToken(): string | null {
+    // try common storage keys; adjust if your app uses a different key
+    return (
+      localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken') || null
+    )
+  }
+
+  function buildHeaders(withJson = true) {
+    const token = getAuthToken()
+    const headers: Record<string, string> = {}
+    if (withJson) headers['Content-Type'] = 'application/json'
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return headers
+  }
+
   useEffect(() => {
     // debug
     // eslint-disable-next-line no-console
@@ -76,7 +91,7 @@ export default function Usuarios() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/usuarios`)
+  const res = await fetch(`${API_BASE}/usuarios`, { headers: buildHeaders(false) })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const data = await res.json()
       // backend may return array or wrapped object — handle common shapes
@@ -133,7 +148,9 @@ export default function Usuarios() {
       return
     }
 
-    setSaving(true)
+  setSaving(true)
+  let passwordUpdated = false
+  let fieldsUpdated = false
     try {
       const method = editing?.id ? 'PATCH' : 'POST'
       const url = editing?.id ? `${API_BASE}/usuarios/${editing.id}` : `${API_BASE}/usuarios`
@@ -148,33 +165,81 @@ export default function Usuarios() {
         payload.password = form.password
       }
 
-      // debug
-      // eslint-disable-next-line no-console
-      console.log('Saving user', method, url, payload)
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      // debug
-      // eslint-disable-next-line no-console
-      console.log('Save response status', res.status)
+      // If editing, backend may expect password updates at /:id/password.
+      // We'll first PATCH the main resource (nombre, email, role_id) and then, if a new password was provided,
+      // call the password endpoint separately.
       let resJson: any = null
-      try {
-        resJson = await res.json()
-        // eslint-disable-next-line no-console
-        console.log('Save response body', resJson)
-      } catch (e) {
-        // no JSON body
-        // eslint-disable-next-line no-console
-        console.log('Save response had no JSON body')
-      }
+      if (editing?.id) {
+        const fieldsPayload: any = {
+          nombre: form.nombre,
+          email: form.email,
+          role_id: roleToId[form.role] ?? roleToId['user'],
+        }
 
-      if (!res.ok) {
-        const msg = resJson?.message || resJson?.error || `${res.status} ${res.statusText}`
-        throw new Error(msg)
+        // debug
+        // eslint-disable-next-line no-console
+        console.log('Updating user fields', editing.id, fieldsPayload)
+
+        const fieldsRes = await fetch(`${API_BASE}/usuarios/${editing.id}`, {
+          method: 'PATCH',
+          headers: buildHeaders(true),
+          body: JSON.stringify(fieldsPayload),
+        })
+        // eslint-disable-next-line no-console
+        console.log('Fields update status', fieldsRes.status)
+        try { resJson = await fieldsRes.json() } catch (e) { /* ignore */ }
+        if (!fieldsRes.ok) {
+          const msg = resJson?.message || resJson?.error || `${fieldsRes.status} ${fieldsRes.statusText}`
+          throw new Error(msg)
+        }
+        // mark that fields update succeeded
+        fieldsUpdated = true
+
+        // If a new password was provided, call the dedicated endpoint
+    if (form.password && form.password.trim()) {
+          // debug
+          // eslint-disable-next-line no-console
+          console.log('Updating password for user', editing.id)
+          const passRes = await fetch(`${API_BASE}/usuarios/${editing.id}/password`, {
+            method: 'PATCH',
+            headers: buildHeaders(true),
+            // backend expects `newPassword` for this endpoint
+            body: JSON.stringify({ newPassword: form.password }),
+          })
+          // eslint-disable-next-line no-console
+          console.log('Password update status', passRes.status)
+          let passJson: any = null
+          try { passJson = await passRes.json() } catch (e) { /* ignore */ }
+          if (!passRes.ok) {
+            const msg = passJson?.message || passJson?.error || `${passRes.status} ${passRes.statusText}`
+            throw new Error(msg)
+          }
+            // mark that password was updated
+            passwordUpdated = true
+            // prefer a more detailed response if returned
+            if (passJson) resJson = passJson
+        }
+      } else {
+        // creating new user: POST with password included
+        // debug
+        // eslint-disable-next-line no-console
+        console.log('Creating user', payload)
+        const res = await fetch(url, {
+          method,
+          headers: buildHeaders(true),
+          body: JSON.stringify(payload),
+        })
+        // debug
+        // eslint-disable-next-line no-console
+        console.log('Create response status', res.status)
+        try { resJson = await res.json() } catch (e) { /* ignore */ }
+        if (!res.ok) {
+          const msg = resJson?.message || resJson?.error || `${res.status} ${res.statusText}`
+          throw new Error(msg)
+        }
+        // creation counts as fields update
+        fieldsUpdated = true
       }
 
       // Update local list: created or updated
@@ -203,7 +268,17 @@ export default function Usuarios() {
 
       setEditing(null)
       setForm({ nombre: '', email: '', role: 'user' })
-      setSuccess('Usuario guardado correctamente')
+      // Build a concatenated message depending on what changed
+      if (fieldsUpdated && passwordUpdated) {
+        setSuccess('Usuario actualizado. Contraseña actualizada')
+      } else if (fieldsUpdated) {
+        // differentiate creation vs update could be added; keep simple
+        setSuccess('Usuario actualizado')
+      } else if (passwordUpdated) {
+        setSuccess('Contraseña actualizada')
+      } else {
+        setSuccess('Usuario guardado correctamente')
+      }
       setTimeout(() => setSuccess(null), 3000)
     } catch (err: any) {
       setError(err.message || 'Error guardando usuario')
@@ -217,7 +292,7 @@ export default function Usuarios() {
     if (!confirm('¿Eliminar usuario?')) return
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/usuarios/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API_BASE}/usuarios/${id}`, { method: 'DELETE', headers: buildHeaders(false) })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await fetchUsuarios()
       setSuccess('Usuario eliminado')

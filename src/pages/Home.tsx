@@ -2,6 +2,53 @@ import Hero from '../components/Hero'
 import HighlightCard from '../components/HighlightCard'
 import NewsList from '../components/NewsList'
 import Footer from '../components/Footer'
+import { useState } from 'react'
+import { useAuth } from '../auth.tsx'
+
+function LoginBox() {
+  const auth = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (auth.user) {
+    const displayName = (auth.user.nombre && auth.user.nombre.toString().trim()) ? auth.user.nombre : (auth.user.email ?? 'Usuario')
+    return (
+      <div className="bg-white p-4 rounded shadow">
+        <div>Bienvenido, <strong>{displayName}</strong></div>
+        <div className="mt-2">
+          <button onClick={() => auth.logout()} className="px-3 py-1 border rounded">Cerrar sesión</button>
+        </div>
+      </div>
+    )
+  }
+
+  async function submit(e: any) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      await auth.login(email, password)
+    } catch (err: any) {
+      setError(err.message || 'Error login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="bg-white p-4 rounded shadow">
+      <h4 className="font-semibold mb-2">Iniciar sesión</h4>
+      {error && <div className="text-red-600 mb-2">{error}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <input value={email} onChange={(e) => setEmail(e.target.value)} className="p-2 border rounded" placeholder="Correo" />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="p-2 border rounded" placeholder="Contraseña" />
+        <button disabled={loading} className="bg-blue-700 text-white px-4 py-2 rounded">{loading ? 'Entrando...' : 'Entrar'}</button>
+      </div>
+    </form>
+  )
+}
 
 export default function Home() {
   const news = [
@@ -31,6 +78,10 @@ export default function Home() {
         title="Universidad"
         subtitle="Formamos profesionales preparados para los retos del siglo XXI mediante una docencia innovadora, investigación con impacto y vinculación con la comunidad."
       />
+
+      <div className="container mx-auto px-4">
+        <LoginBox />
+      </div>
 
       <section id="programas" className="container mx-auto px-4">
         <h2 className="text-2xl font-semibold text-blue-950">Áreas destacadas</h2>
