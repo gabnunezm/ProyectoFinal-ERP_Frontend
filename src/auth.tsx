@@ -48,13 +48,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // if we have a token but the stored user is empty (e.g. {}), try to decode token to populate user
   useEffect(() => {
-    if ((!user || Object.keys(user).length === 0) && token) {
-      ;(async () => {
-        try {
-          const payload = parseJwt(token) || {}
-          const roleId = payload?.role_id ?? payload?.roleId ?? payload?.role
-          const mappedRole = roleId ? idToRole[String(roleId)] : undefined
-          const baseUser = { id: payload?.id ?? null, nombre: payload?.nombre ?? payload?.name ?? '', email: payload?.email ?? '', role: mappedRole ?? (payload?.role ? String(payload.role) : '') }
+    if (!token) return
+    ;(async () => {
+      try {
+        const payload = parseJwt(token) || {}
+        // prefer explicit role name if provided (role_name), otherwise fall back to numeric role_id
+        const rawRole = payload?.role_name ?? payload?.roleName ?? payload?.role ?? payload?.role_id ?? payload?.roleId
+        let mappedRole: string | undefined
+        if (rawRole == null) mappedRole = undefined
+        else if (typeof rawRole === 'number' || (/^\d+$/.test(String(rawRole)))) mappedRole = idToRole[String(rawRole)] ?? String(rawRole)
+        else mappedRole = String(rawRole)
+        const baseUser = { id: payload?.id ?? null, nombre: payload?.nombre ?? payload?.name ?? '', email: payload?.email ?? '', role: mappedRole ?? '' }
+
+        // decide whether to replace the stored user with the token-derived user
+        const storedMismatch = !user || Object.keys(user).length === 0 || String(user.id) !== String(baseUser.id) || (user.role ?? '') !== (baseUser.role ?? '') || (user.email ?? '') !== (baseUser.email ?? '')
+        if (storedMismatch) {
           setUser(baseUser)
 
           // fetch profile to enrich nombre if missing
@@ -70,12 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // ignore profile fetch errors
             }
           }
-        } catch (e) {
-          // ignore
         }
-      })()
-    }
-  }, [])
+      } catch (e) {
+        // ignore
+      }
+    })()
+    // run this effect once on mount and whenever token/user change
+  }, [token])
 
   async function login(email: string, password: string) {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -101,11 +110,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       // try to decode token payload to extract id/email/role_id
       try {
-        const payload = parseJwt(tokenValue) || {}
-        const roleId = payload?.role_id ?? payload?.roleId ?? payload?.role
-        const mappedRole = roleId ? idToRole[String(roleId)] : undefined
-        // ensure we set explicit values (avoid undefined-only object)
-        const baseUser = { id: payload?.id ?? null, nombre: payload?.nombre ?? payload?.name ?? '', email: payload?.email ?? '', role: mappedRole ?? (payload?.role ? String(payload.role) : '') }
+  const payload = parseJwt(tokenValue) || {}
+  // prefer explicit role name if provided (role_name), otherwise fall back to numeric role_id
+  const rawRole = payload?.role_name ?? payload?.roleName ?? payload?.role ?? payload?.role_id ?? payload?.roleId
+  let mappedRole: string | undefined
+  if (rawRole == null) mappedRole = undefined
+  else if (typeof rawRole === 'number' || (/^\d+$/.test(String(rawRole)))) mappedRole = idToRole[String(rawRole)] ?? String(rawRole)
+  else mappedRole = String(rawRole)
+  // ensure we set explicit values (avoid undefined-only object)
+  const baseUser = { id: payload?.id ?? null, nombre: payload?.nombre ?? payload?.name ?? '', email: payload?.email ?? '', role: mappedRole ?? '' }
         setUser(baseUser)
 
         // If nombre is missing, try to fetch full profile from backend
@@ -164,6 +177,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     '1': 'admin',
     '2': 'editor',
     '3': 'user',
+    // backend uses 4 for docentes/teachers in this project
+    '4': 'docente',
   }
 
   return (
