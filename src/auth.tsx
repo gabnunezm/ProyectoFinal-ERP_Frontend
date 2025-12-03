@@ -141,8 +141,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
+    // Limpiar estado primero
     setToken(null)
     setUser(null)
+    
+    // Limpiar localStorage de forma segura
+    try {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    } catch (e) {
+      // ignore localStorage errors
+    }
+    
+    // Forzar redirección al home después de un pequeño delay
+    // para asegurar que el estado se limpió correctamente
+    setTimeout(() => {
+      window.location.href = '/'
+    }, 100)
   }
 
   function normalizeUser(raw: any): AuthUser {

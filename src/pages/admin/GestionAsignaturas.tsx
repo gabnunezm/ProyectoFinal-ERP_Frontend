@@ -326,35 +326,88 @@ export default function GestionAsignaturas() {
           </form>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="overflow-x-auto shadow-lg rounded-xl border border-gray-200">
+          <table className="w-full">
             <thead>
-              <tr className="bg-stone-100">
-                <th className="border p-2 text-left">Código</th>
-                <th className="border p-2 text-left">Nombre</th>
-                <th className="border p-2 text-left">Créditos</th>
-                <th className="border p-2 text-left">Acciones</th>
+              <tr className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                    </svg>
+                    Código
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    Nombre
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Créditos
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody>
-              {cursos.map((curso) => (
-                <tr key={curso.id}>
-                  <td className="border p-2">{curso.codigo || '-'}</td>
-                  <td className="border p-2">{curso.nombre}</td>
-                  <td className="border p-2">{curso.creditos || 0}</td>
-                  <td className="border p-2">
-                    <button
-                      onClick={() => openEditCurso(curso)}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded mr-2"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCurso(curso.id)}
-                      className="px-2 py-1 bg-red-600 text-white rounded"
-                    >
-                      Eliminar
-                    </button>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {cursos.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      <p className="text-lg font-medium">No hay cursos registrados</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {cursos.map((curso, idx) => (
+                <tr key={curso.id} className={`hover:bg-purple-50 transition-colors ${
+                  idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                }`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                      {curso.codigo || '-'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {curso.nombre}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-sm font-semibold bg-indigo-100 text-indigo-800">
+                      {curso.creditos || 0}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openEditCurso(curso)}
+                        className="inline-flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCurso(curso.id)}
+                        className="inline-flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -440,40 +493,102 @@ export default function GestionAsignaturas() {
           </form>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="overflow-x-auto shadow-lg rounded-xl border border-gray-200">
+          <table className="w-full">
             <thead>
-              <tr className="bg-stone-100">
-                <th className="border p-2 text-left">Curso</th>
-                <th className="border p-2 text-left">Sección</th>
-                <th className="border p-2 text-left">Docente</th>
-                <th className="border p-2 text-left">Horario</th>
-                <th className="border p-2 text-left">Acciones</th>
+              <tr className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    Curso
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Sección
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Docente
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Horario
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody>
-              {secciones.map((sec) => {
+            <tbody className="bg-white divide-y divide-gray-200">
+              {secciones.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      <p className="text-lg font-medium">No hay secciones registradas</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {secciones.map((sec, idx) => {
                 const curso = cursos.find((c) => c.id === sec.curso_id)
                 const docente = docentes.find((d) => d.id === sec.docente_id)
                 return (
-                  <tr key={sec.id}>
-                    <td className="border p-2">{curso?.nombre || '-'}</td>
-                    <td className="border p-2">{sec.nombre_seccion}</td>
-                    <td className="border p-2">{docente?.nombre || sec.docente_nombre || '-'}</td>
-                    <td className="border p-2">{sec.horario || '-'}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => openEditSeccion(sec)}
-                        className="px-2 py-1 bg-yellow-500 text-white rounded mr-2"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSeccion(sec.id)}
-                        className="px-2 py-1 bg-red-600 text-white rounded"
-                      >
-                        Eliminar
-                      </button>
+                  <tr key={sec.id} className={`hover:bg-indigo-50 transition-colors ${
+                    idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  }`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {curso?.nombre || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                        {sec.nombre_seccion}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {docente?.nombre || sec.docente_nombre || (
+                        <span className="text-gray-400 italic">Sin asignar</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {sec.horario || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEditSeccion(sec)}
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm hover:shadow-md font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSeccion(sec.id)}
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-sm hover:shadow-md font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
