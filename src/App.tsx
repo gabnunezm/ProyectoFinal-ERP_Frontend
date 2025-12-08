@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
 import Home from './pages/Home.tsx'
 import About from './pages/About.tsx'
 import Admisiones from './pages/Admisiones.tsx'
-import Usuarios from './pages/Usuarios.tsx'
 import Portal from './pages/Portal'
 import PortalDocente from './pages/PortalDocente'
 import PanelAdmin from './pages/PanelAdmin'
@@ -87,7 +86,6 @@ function App() {
                     <span className="hidden sm:inline">Acerca</span>
                   </Link>
                   <PublicAdmisionesLink />
-                  <AuthorizedUsuariosLink />
                   <AuthorizedPanelAdminLink />
                   <AuthorizedPortalLink />
                   <AuthorizedPagosLink />
@@ -103,7 +101,6 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/admisiones" element={<Admisiones />} />
-              <Route path="/usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
               <Route path="/admin" element={<RequireAdmin><PanelAdmin /></RequireAdmin>} />
               <Route path="/portal" element={<RequireStudent><Portal /></RequireStudent>} />
               <Route path="/pagos" element={<RequireStudent><PagoEstudiante /></RequireStudent>} />
@@ -128,21 +125,6 @@ function PublicAdmisionesLink() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
       <span className="hidden sm:inline">Admisiones</span>
-    </Link>
-  )
-}
-
-function AuthorizedUsuariosLink() {
-  const auth = useAuth()
-  if (!auth.user) return null
-  const role = (auth.user.role ?? '')
-  if (!(role === 'admin' || role === '1')) return null
-  return (
-    <Link to="/usuarios" className="px-4 py-2 text-blue-100 font-medium rounded-lg hover:bg-white/10 hover:text-white transition-all flex items-center gap-2">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-      <span className="hidden lg:inline">Usuarios</span>
     </Link>
   )
 }
