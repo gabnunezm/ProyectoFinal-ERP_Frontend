@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth';
 
+type Calificacion = {
+  id: number;
+  tipo: string;
+  nota: number;
+  peso: number;
+};
+
 type Inscripcion = {
   inscripcion_id: number;
   seccion_id: number;
@@ -9,7 +16,18 @@ type Inscripcion = {
   nombre_seccion: string;
   nota_final: number | null;
   calificaciones_count: number;
+  calificaciones?: Calificacion[];
   asistencia?: Record<string, number>;
+};
+
+type SeccionDisponible = {
+  id: number;
+  curso_id: number;
+  nombre_seccion: string;
+  jornada?: string;
+  horario?: string;
+  curso_nombre?: string;
+  docente_nombre?: string;
 };
 
 export default function Portal() {
@@ -23,6 +41,7 @@ export default function Portal() {
   const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
   const [pagos, setPagos] = useState<any>(null);
   const [estudianteId, setEstudianteId] = useState<number | null>(null);
+  const [seccionesDisponibles, setSeccionesDisponibles] = useState<SeccionDisponible[]>([]);
 
   const [tab, setTab] = useState<'perfil'|'inscripcion'|'materias'|'calificaciones'|'historial'|'asistencia'>('perfil');
 
@@ -33,6 +52,7 @@ export default function Portal() {
   useEffect(() => {
     if (!user || !token) return;
     fetchData();
+    fetchSeccionesDisponibles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
@@ -117,11 +137,36 @@ export default function Portal() {
     return null;
   }
 
+  async function fetchSeccionesDisponibles() {
+    try {
+      const res = await fetch('/api/secciones', {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+      if (res.ok) {
+        const body = await res.json();
+        const secciones = body.secciones || body || [];
+        setSeccionesDisponibles(Array.isArray(secciones) ? secciones : []);
+      }
+    } catch (err) {
+      console.error('Error cargando secciones:', err);
+    }
+  }
+
   async function handleEnroll(e: React.FormEvent) {
     e.preventDefault();
     setActionMsg(null);
-    if (!seccionIdToEnroll) return setActionMsg('Indica id de sección para inscribir');
+    if (!seccionIdToEnroll) return setActionMsg('Selecciona una sección para inscribirte');
     if (!user) return setActionMsg('Usuario no autenticado');
+
+    // Verificar si ya está inscrito en esta sección
+    const yaInscrito = inscripciones.some(ins => ins.seccion_id === Number(seccionIdToEnroll));
+    if (yaInscrito) {
+      return setActionMsg('⚠️ Ya estás inscrito en esta sección');
+    }
+
     try {
       // ensure we have estudiante id
       let eid = estudianteId;
@@ -147,13 +192,17 @@ export default function Portal() {
       if (!res.ok) {
         setActionMsg(json.error || `Error ${res.status}`);
       } else {
-        setActionMsg('Inscripción realizada correctamente');
+        setActionMsg('✅ Inscripción realizada correctamente');
         setSeccionIdToEnroll('');
         await fetchData();
       }
     } catch (err: any) {
       setActionMsg(err?.message || 'Error en inscripción');
     }
+  }
+
+  function isInscrito(seccionId: number): boolean {
+    return inscripciones.some(ins => ins.seccion_id === seccionId);
   }
 
   if (!user) return <div>Acceso no autorizado. Inicie sesión como estudiante.</div>;
@@ -282,25 +331,129 @@ export default function Portal() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-800">Inscripción</h3>
+                      <h3 className="text-2xl font-bold text-gray-800">Inscripción de Asignaturas</h3>
                     </div>
-                    <p className="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      💡 Ingresa el ID de la sección a la que deseas inscribirte
+                    <p className="text-sm text-gray-600 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      💡 Selecciona una sección de la lista para inscribirte. Las secciones en las que ya estás inscrito aparecen en gris.
                     </p>
-                    <form onSubmit={handleEnroll} className="flex flex-col sm:flex-row gap-3">
-                      <input 
-                        className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
-                        placeholder="ID de sección" 
-                        value={seccionIdToEnroll} 
-                        onChange={e => setSeccionIdToEnroll(e.target.value)} 
-                      />
-                      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-xl transition-all hover:scale-105" type="submit">
-                        Inscribir
-                      </button>
-                    </form>
+                    
+                    {seccionesDisponibles.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="text-gray-500 font-medium">No hay secciones disponibles</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 mb-6">
+                        {seccionesDisponibles.map((seccion) => {
+                          const inscrito = isInscrito(seccion.id);
+                          return (
+                            <div
+                              key={seccion.id}
+                              onClick={() => {
+                                if (inscrito) {
+                                  setActionMsg('⚠️ Ya estás inscrito en esta sección');
+                                } else {
+                                  setSeccionIdToEnroll(String(seccion.id));
+                                  setActionMsg(null);
+                                }
+                              }}
+                              className={`p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                                inscrito
+                                  ? 'bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed'
+                                  : seccionIdToEnroll === String(seccion.id)
+                                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-500 shadow-lg'
+                                  : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-md'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h4 className={`font-bold text-lg ${inscrito ? 'text-gray-500' : 'text-blue-900'}`}>
+                                      {seccion.curso_nombre || `Curso ID ${seccion.curso_id}`}
+                                    </h4>
+                                    {inscrito && (
+                                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-300 text-gray-700 rounded-full text-xs font-bold">
+                                        ✓ INSCRITO
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mb-2">
+                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                      inscrito ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                      </svg>
+                                      Sección: {seccion.nombre_seccion}
+                                    </span>
+                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                      inscrito ? 'bg-gray-200 text-gray-600' : 'bg-purple-100 text-purple-700'
+                                    }`}>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                      </svg>
+                                      ID: {seccion.id}
+                                    </span>
+                                  </div>
+                                  {seccion.horario && (
+                                    <p className={`text-sm ${inscrito ? 'text-gray-500' : 'text-gray-600'} flex items-center gap-2`}>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      {seccion.horario}
+                                    </p>
+                                  )}
+                                  {seccion.docente_nombre && (
+                                    <p className={`text-sm ${inscrito ? 'text-gray-500' : 'text-gray-600'} flex items-center gap-2 mt-1`}>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                      </svg>
+                                      Docente: {seccion.docente_nombre}
+                                    </p>
+                                  )}
+                                </div>
+                                {!inscrito && seccionIdToEnroll === String(seccion.id) && (
+                                  <div className="ml-4">
+                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {seccionIdToEnroll && !isInscrito(Number(seccionIdToEnroll)) && (
+                      <form onSubmit={handleEnroll} className="mt-6">
+                        <button 
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center gap-2" 
+                          type="submit"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          Confirmar Inscripción
+                        </button>
+                      </form>
+                    )}
+
                     {actionMsg && (
-                      <div className={`mt-4 p-4 rounded-lg ${actionMsg.includes('correctamente') ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
-                        {actionMsg}
+                      <div className={`mt-4 p-4 rounded-lg flex items-center gap-3 ${
+                        actionMsg.includes('correctamente') || actionMsg.includes('✅')
+                          ? 'bg-green-50 border border-green-200 text-green-800' 
+                          : 'bg-amber-50 border border-amber-200 text-amber-800'
+                      }`}>
+                        <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <span>{actionMsg}</span>
                       </div>
                     )}
                   </div>
@@ -383,8 +536,7 @@ export default function Portal() {
                             <tr>
                               <th className="px-4 py-3 text-left rounded-tl-lg">Asignatura</th>
                               <th className="px-4 py-3 text-left">Sección</th>
-                              <th className="px-4 py-3 text-center">Nota Final</th>
-                              <th className="px-4 py-3 text-center rounded-tr-lg">Componentes</th>
+                              <th className="px-4 py-3 text-center rounded-tr-lg">Nota Total</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -395,11 +547,6 @@ export default function Portal() {
                                 <td className="px-4 py-4 text-center">
                                   <span className={`inline-block px-3 py-1 rounded-full font-bold ${ins.nota_final && ins.nota_final >= 70 ? 'bg-green-100 text-green-700' : ins.nota_final ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
                                     {ins.nota_final ?? '—'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 text-center">
-                                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                    {ins.calificaciones_count}
                                   </span>
                                 </td>
                               </tr>
