@@ -46,9 +46,20 @@ export default function Admisiones() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simular envío al backend
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      // Obtener solicitudes existentes
+      const existentes = JSON.parse(localStorage.getItem('solicitudes_admisiones') || '[]')
+      
+      // Agregar nueva solicitud
+      const nuevaSolicitud = {
+        id: Date.now(),
+        ...formData,
+        fecha_solicitud: new Date().toISOString()
+      }
+      
+      existentes.push(nuevaSolicitud)
+      localStorage.setItem('solicitudes_admisiones', JSON.stringify(existentes))
+      
       setShowSuccess(true)
       
       // Limpiar formulario
@@ -83,7 +94,12 @@ export default function Admisiones() {
       setTimeout(() => {
         setShowSuccess(false)
       }, 4000)
-    }, 1000)
+    } catch (error) {
+      console.error('Error al enviar solicitud:', error)
+      alert('Error al enviar la solicitud. Por favor intenta nuevamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

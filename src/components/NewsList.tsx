@@ -30,13 +30,7 @@ export default function NewsList({ items }: NewsListProps) {
               <time>{formatDate(item.date)}</time>
             </div>
           </div>
-          <p className="text-gray-700 leading-relaxed mb-4">{item.excerpt}</p>
-          <a href="#" className="inline-flex items-center gap-2 text-blue-700 font-semibold hover:text-blue-800 transition-colors group-hover:gap-3">
-            Leer más
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </a>
+          <p className="text-gray-700 leading-relaxed">{item.excerpt}</p>
         </article>
       ))}
     </div>

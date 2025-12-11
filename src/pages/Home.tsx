@@ -4,6 +4,136 @@ import NewsList from '../components/NewsList'
 import Footer from '../components/Footer'
 import { useState } from 'react'
 import { useAuth } from '../auth.tsx'
+import { useNavigate } from 'react-router-dom'
+
+function SolicitudInfoModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const [formData, setFormData] = useState({ nombre: '', email: '', telefono: '', mensaje: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [enviado, setEnviado] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEnviando(true)
+
+    try {
+      // Obtener solicitudes existentes
+      const existentes = JSON.parse(localStorage.getItem('solicitudes_informacion') || '[]')
+      
+      // Agregar nueva solicitud
+      const nuevaSolicitud = {
+        id: Date.now(),
+        ...formData,
+        fecha_solicitud: new Date().toISOString()
+      }
+      
+      existentes.push(nuevaSolicitud)
+      localStorage.setItem('solicitudes_informacion', JSON.stringify(existentes))
+      
+      setEnviado(true)
+      setFormData({ nombre: '', email: '', telefono: '', mensaje: '' })
+      setTimeout(() => {
+        setEnviado(false)
+        onClose()
+      }, 3000)
+    } catch (error) {
+      console.error('❌ Error al enviar solicitud:', error)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Solicitar Información</h3>
+          <button onClick={onClose} className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {enviado ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Solicitud Enviada!</h3>
+            <p className="text-gray-600">Nos pondremos en contacto contigo pronto.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tu nombre"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tu@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="(123) 456-7890"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Mensaje *</label>
+                <textarea
+                  required
+                  value={formData.mensaje}
+                  onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="¿Qué información te gustaría recibir?"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="submit"
+                disabled={enviando}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold disabled:opacity-50"
+              >
+                {enviando ? 'Enviando...' : 'Enviar Solicitud'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function LoginBox() {
   const auth = useAuth()
@@ -97,6 +227,9 @@ function LoginBox() {
 }
 
 export default function Home() {
+  const [showModalInfo, setShowModalInfo] = useState(false)
+  const navigate = useNavigate()
+
   const news = [
     {
       id: 1,
@@ -165,7 +298,11 @@ export default function Home() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <HighlightCard title="Admisiones" description="Información sobre requisitos, plazos y proceso de matrícula para todos los programas." />
+          <HighlightCard 
+            title="Admisiones" 
+            description="Información sobre requisitos, plazos y proceso de matrícula para todos los programas." 
+            onClick={() => navigate('/admisiones')}
+          />
           <HighlightCard title="Programas Académicos" description="Ofrecemos programas de pregrado y posgrado en áreas como Ingeniería, Ciencias Sociales y Salud." />
           <HighlightCard title="Investigación" description="Líneas de investigación, grupos y proyectos con impacto local y global." />
         </div>
@@ -239,9 +376,6 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <button className="mt-6 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium">
-                    Ver más programas
-                  </button>
                 </div>
               </div>
             ))}
@@ -260,14 +394,6 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <NewsList items={news} />
         </div>
-        <div className="text-center mt-8">
-          <a href="#" className="inline-flex items-center gap-2 text-blue-700 font-semibold hover:text-blue-800 transition-colors">
-            Ver todas las noticias
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </a>
-        </div>
       </section>
 
       {/* Call to Action */}
@@ -279,12 +405,12 @@ export default function Home() {
               Solicita información o agenda una visita guiada a nuestro campus
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-lg inline-flex items-center justify-center gap-2 cursor-pointer">
+              <button onClick={() => setShowModalInfo(true)} className="bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-lg inline-flex items-center justify-center gap-2 cursor-pointer">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Solicitar Información
-              </a>
+              </button>
               <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition-colors inline-flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -331,6 +457,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <SolicitudInfoModal isOpen={showModalInfo} onClose={() => setShowModalInfo(false)} />
 
       <Footer />
     </div>

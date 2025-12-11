@@ -1,4 +1,135 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+function SolicitudInfoModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const [formData, setFormData] = useState({ nombre: '', email: '', telefono: '', mensaje: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [enviado, setEnviado] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEnviando(true)
+
+    try {
+      const existentes = JSON.parse(localStorage.getItem('solicitudes_informacion') || '[]')
+      const nuevaSolicitud = {
+        id: Date.now(),
+        ...formData,
+        fecha_solicitud: new Date().toISOString()
+      }
+      existentes.push(nuevaSolicitud)
+      localStorage.setItem('solicitudes_informacion', JSON.stringify(existentes))
+      
+      setEnviado(true)
+      setFormData({ nombre: '', email: '', telefono: '', mensaje: '' })
+      setTimeout(() => {
+        setEnviado(false)
+        onClose()
+      }, 3000)
+    } catch (error) {
+      console.error('❌ Error al enviar solicitud:', error)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Solicitar Información</h3>
+          <button onClick={onClose} className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {enviado ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Solicitud Enviada!</h3>
+            <p className="text-gray-600">Nos pondremos en contacto contigo pronto.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tu nombre"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tu@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="(123) 456-7890"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Mensaje *</label>
+                <textarea
+                  required
+                  value={formData.mensaje}
+                  onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="¿Qué información te gustaría recibir?"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="submit"
+                disabled={enviando}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold disabled:opacity-50"
+              >
+                {enviando ? 'Enviando...' : 'Enviar Solicitud'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function About() {
+  const [showModalInfo, setShowModalInfo] = useState(false)
+  const navigate = useNavigate()
+
   return (
     <div className="bg-gradient-to-b from-stone-50 to-white min-h-screen">
       {/* Hero Section */}
@@ -241,15 +372,23 @@ export default function About() {
             Forma parte de una institución que transforma vidas y construye el futuro
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <button className="px-8 py-3 bg-white text-blue-900 font-semibold rounded-lg hover:bg-blue-50 transition-colors">
+            <button 
+              onClick={() => navigate('/#programas')}
+              className="px-8 py-3 bg-white text-blue-900 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+            >
               Programas Académicos
             </button>
-            <button className="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-900 transition-colors">
+            <button 
+              onClick={() => setShowModalInfo(true)}
+              className="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-900 transition-colors"
+            >
               Contáctanos
             </button>
           </div>
         </div>
       </section>
+
+      <SolicitudInfoModal isOpen={showModalInfo} onClose={() => setShowModalInfo(false)} />
     </div>
   )
 }

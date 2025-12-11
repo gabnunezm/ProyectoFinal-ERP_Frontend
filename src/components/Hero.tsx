@@ -19,8 +19,26 @@ export default function Hero({ title, subtitle }: HeroProps) {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Envío de formulario
-    setTimeout(() => {
+    try {
+      // Obtener solicitudes existentes de localStorage
+      const existentes = JSON.parse(localStorage.getItem('solicitudes_informacion') || '[]')
+      
+      // Crear nueva solicitud con los datos del formulario
+      const nuevaSolicitud = {
+        id: Date.now(),
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: formData.telefono,
+        mensaje: formData.descripcion,
+        fecha_solicitud: new Date().toISOString()
+      }
+      
+      // Agregar la nueva solicitud al array
+      existentes.push(nuevaSolicitud)
+      
+      // Guardar en localStorage
+      localStorage.setItem('solicitudes_informacion', JSON.stringify(existentes))
+      
       setIsSubmitting(false)
       setShowSuccess(true)
       
@@ -36,7 +54,10 @@ export default function Hero({ title, subtitle }: HeroProps) {
       setTimeout(() => {
         setShowSuccess(false)
       }, 4000)
-    }, 800)
+    } catch (error) {
+      console.error('❌ Error al enviar solicitud desde Hero:', error)
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

@@ -4,10 +4,11 @@ import GestionEstudiantes from './admin/GestionEstudiantes.tsx'
 import GestionAsignaturas from './admin/GestionAsignaturas.tsx'
 import GestionDocentes from './admin/GestionDocentes.tsx'
 import GestionPagos from './admin/GestionPagos.tsx'
+import GestionSolicitudes from './admin/GestionSolicitudes.tsx'
 
 export default function PanelAdmin() {
   const auth = useAuth()
-  const [activeModule, setActiveModule] = useState<'estudiantes' | 'asignaturas' | 'docentes' | 'pagos'>('estudiantes')
+  const [activeModule, setActiveModule] = useState<'estudiantes' | 'asignaturas' | 'docentes' | 'pagos' | 'solicitudes'>('estudiantes')
 
   if (!auth.user) {
     return (
@@ -65,6 +66,16 @@ export default function PanelAdmin() {
         </svg>
       ),
       color: 'from-orange-600 to-orange-700'
+    },
+    { 
+      id: 'solicitudes' as const, 
+      label: 'Solicitudes', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      color: 'from-indigo-600 to-purple-600'
     }
   ]
 
@@ -101,7 +112,7 @@ export default function PanelAdmin() {
       {/* Navigation Tabs */}
       <div className="container mx-auto px-6 -mt-6">
         <div className="bg-white rounded-2xl shadow-xl p-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             {modules.map((module) => (
               <button
                 key={module.id}
@@ -134,6 +145,7 @@ export default function PanelAdmin() {
             {activeModule === 'docentes' && <GestionDocentes />}
             {activeModule === 'asignaturas' && <GestionAsignaturas />}
             {activeModule === 'pagos' && <GestionPagos />}
+            {activeModule === 'solicitudes' && <GestionSolicitudes />}
           </div>
         </div>
       </div>
